@@ -2,16 +2,16 @@ from sqlalchemy import insert
 from db.database import sync_engine
 from db.session import session_factory, acync_session_factory
 from db.models.author import AuthorsORM, metadata
-
+from db.base import Base
 def create_tables():
-    sync_engine.echo = False
-    metadata.drop_all(bind=sync_engine)
-    metadata.create_all(bind=sync_engine)
+    sync_engine.echo = True
+    Base.metadata.drop_all(bind=sync_engine)
+    Base.metadata.create_all(bind=sync_engine)
     sync_engine.echo = True
 
 def insert_data():
     with session_factory() as session:
-        session.query(AuthorsORM).delete()
+        session.execute(AuthorsORM.__table__.delete())
         authors = [
             AuthorsORM(
                 first_name="Александр",
