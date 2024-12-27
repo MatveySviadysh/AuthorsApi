@@ -3,6 +3,7 @@ from db.queries.seeds import create_tables, insert_data
 from fastapi import FastAPI
 from core.config import settings
 import asyncio
+from core.logger import app_logger, error_logger, access_logger
 
 # app = FastAPI(
 #     title=settings.PROJECT_NAME,
@@ -20,4 +21,8 @@ import asyncio
 if __name__ == "__main__":
     create_tables()
     insert_data()
+    
+    app_logger.info("Приложение запущено")
+    error_logger.error("Произошла ошибка")
+    access_logger.info("Получен запрос GET /authors")
     
