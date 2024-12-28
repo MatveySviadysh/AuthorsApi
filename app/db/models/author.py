@@ -50,6 +50,9 @@ class AuthorsORM(Base):
 
     quotes: Mapped[list["QuotesORM"]] = relationship("QuotesORM", back_populates="author")
 
+    def __repr__(self):
+        return f"Автор(id={self.id}, {self.first_name} {self.patronymic} {self.last_name})"
+
 class QuotesORM(Base):
     __tablename__ = "quotes"
 
@@ -63,4 +66,17 @@ class QuotesORM(Base):
     author: Mapped["AuthorsORM"] = relationship("AuthorsORM", back_populates="quotes")
 
 
-metadata = MetaData()
+metadata_obj = MetaData()
+
+authors_table = Table(
+    "authors",
+    metadata_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True, index=True, nullable=False),
+    Column("first_name", String(200), nullable=True),
+    Column("last_name", String(200), nullable=True), 
+    Column("patronymic", String(100), nullable=True),
+    Column("photo", String(255), nullable=True),
+    Column("bio", Text, nullable=True),
+    Column("birth_date", Date, nullable=False),
+    Column("death_date", Date, nullable=True)
+)
