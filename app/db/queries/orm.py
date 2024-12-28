@@ -1,6 +1,6 @@
 from db.base import Base
 from db.database import sync_engine, async_engine
-from db.models.author import AuthorsORM
+from db.models.author import AuthorsORM, QuotesORM
 from db.session import session_factory, async_session_factory
 from sqlalchemy import select
 
@@ -59,6 +59,23 @@ class SyncORM:
             else:
                 print(f"Автор с id={author_id} не найден")
 
+
+    @staticmethod
+    def select_authors_and_quotes():
+        with session_factory() as session:
+            query = select(
+                AuthorsORM.id,
+                AuthorsORM.first_name,
+                QuotesORM.text,
+                QuotesORM.year
+            ).join(
+                QuotesORM,
+                AuthorsORM.id == QuotesORM.author_id
+            )
+            result = session.execute(query)
+            print(result.all())
+
+
 class AsyncORM:
     @staticmethod
     async def create_tables():
@@ -75,3 +92,14 @@ class AsyncORM:
             session.add_all([worker_jack, worker_michael])
             await session.flush()
             await session.commit()
+
+    
+    @staticmethod
+    async def select_authors_and_quotes():
+        async with async_session_factory() as session:
+            query = select(AuthorsORM, QuotesORM.text).join(
+                QuotesORM,
+                AuthorsORM.id == QuotesORM.author_id
+            )
+            result = await session.execute(query)
+            print(result.all())

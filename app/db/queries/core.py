@@ -1,6 +1,6 @@
-from sqlalchemy import insert, text, select, update, delete
+from sqlalchemy import insert, text, select, update, delete, alias
 from db.database import sync_engine, async_engine
-from db.models.author import authors_table, metadata_obj
+from db.models.author import authors_table, metadata_obj, quotes_table
 from db.base import Base
 
 
@@ -28,17 +28,10 @@ class SyncCore:
     @staticmethod
     def select_authors():
         with sync_engine.connect() as conn:
-            query = select(authors_table)
-            result = conn.execute(query)
-            authors = result.mappings().all()
-            for author in authors:
-                print(
-                    f"ID: {author.id}, "
-                    f"Имя: {author.first_name}, "
-                    f"Отчество: {author.patronymic}, "
-                    f"Фамилия: {author.last_name}, "
-                    f"Дата рождения: {author.birth_date}"
-                )
+            query = select(authors_table) # SELECT * FROM authors
+            res = conn.execute(query)
+            authors = res.all()
+            print(f"Авторы: {authors}")
 
 
     @staticmethod
@@ -60,6 +53,77 @@ class SyncCore:
             )
             conn.execute(stmt)
             conn.commit()
+
+    @staticmethod
+    def  insert_quotes():
+        with sync_engine.connect() as conn:
+            authors = [
+                {
+                    "id": 1,
+                    "first_name": "Антон",
+                    "last_name": "Чехов",
+                    "patronymic": "Павлович", 
+                    "birth_date": "1860-01-29",
+                    "death_date": "1904-07-15",
+                    "bio": "Русский писатель, прозаик, драматург",
+                    "photo": "chekhov.jpg"
+                },
+                {
+                    "id": 2,
+                    "first_name": "Михаил",
+                    "last_name": "Лермонтов",
+                    "patronymic": "Юрьевич",
+                    "birth_date": "1814-10-15", 
+                    "death_date": "1841-07-27",
+                    "bio": "Русский поэт, прозаик, драматург",
+                    "photo": "lermontov.jpg"
+                },
+                {
+                    "id": 3,
+                    "first_name": "Федор",
+                    "last_name": "Достоевский",
+                    "patronymic": "Михайлович",
+                    "birth_date": "1821-11-11",
+                    "death_date": "1881-02-09", 
+                    "bio": "Русский писатель, мыслитель",
+                    "photo": "dostoevsky.jpg"
+                }
+            ]
+            stmt = insert(authors_table).values(authors)
+            conn.execute(stmt)
+            
+            quotes = [
+                {"text": "Краткость - сестра таланта", "year": 1889, "author_id": 1},
+                {"text": "Если боитесь одиночества, то не женитесь", "year": 1893, "author_id": 1},
+                {"text": "В человеке должно быть все прекрасно", "year": 1898, "author_id": 1},
+                {"text": "Белеет парус одинокий", "year": 1832, "author_id": 2},
+                {"text": "Выхожу один я на дорогу", "year": 1841, "author_id": 2},
+                {"text": "Красота спасет мир", "year": 1868, "author_id": 3},
+            ]
+            stmt = insert(quotes_table).values(quotes)
+            conn.execute(stmt)
+            conn.commit()
+
+
+    @staticmethod
+    def select_authors_and_quotes():
+        with sync_engine.connect() as conn:
+            query = (
+                select(
+                    authors_table.c.id,
+                    authors_table.c.first_name,
+                    authors_table.c.last_name,
+                    quotes_table.c.text.label('quote')
+                )
+                .join(
+                    quotes_table,
+                    authors_table.c.id == quotes_table.c.author_id
+                )
+                .order_by(authors_table.c.id)
+            )
+            result = conn.execute(query)
+            print(result.all())
+
 
 class AsyncCore:
     @staticmethod
@@ -94,3 +158,14 @@ class AsyncCore:
             )
             await conn.execute(stmt)
             await conn.commit()
+
+
+    @staticmethod
+    async def select_authors_and_quotes():
+        async with async_engine.connect() as conn:
+            query = select(authors_table, quotes_table.c.text).join(
+                quotes_table, 
+                authors_table.c.id == quotes_table.c.author_id
+            )
+            result = await conn.execute(query)
+            print(result.all())

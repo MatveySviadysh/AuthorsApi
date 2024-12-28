@@ -50,9 +50,6 @@ class AuthorsORM(Base):
 
     quotes: Mapped[list["QuotesORM"]] = relationship("QuotesORM", back_populates="author")
 
-    def __repr__(self):
-        return f"Автор(id={self.id}, {self.first_name} {self.patronymic} {self.last_name})"
-
 class QuotesORM(Base):
     __tablename__ = "quotes"
 
@@ -79,4 +76,15 @@ authors_table = Table(
     Column("bio", Text, nullable=True),
     Column("birth_date", Date, nullable=False),
     Column("death_date", Date, nullable=True)
+)
+
+quotes_table = Table(
+    "quotes",
+    metadata_obj,
+    Column("id", Integer, primary_key=True, autoincrement=True, index=True, nullable=False),
+    Column("text", String(200), nullable=False),
+    Column("created_at", Date, server_default=text("TIMEZONE('utc', now())")),
+    Column("updated_at", Date, server_default=text("TIMEZONE('utc', now())"), onupdate=datetime.utcnow),
+    Column("year", Integer, CheckConstraint("year >= 0 AND year <= extract(year from CURRENT_DATE)"), nullable=True),
+    Column("author_id", Integer, ForeignKey("authors.id", ondelete="CASCADE"), nullable=False)
 )
