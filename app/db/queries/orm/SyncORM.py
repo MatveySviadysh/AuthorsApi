@@ -1,8 +1,10 @@
 from db.base import Base
-from db.database import sync_engine, async_engine
-from db.models.author import AuthorsORM, QuotesORM
-from db.session import session_factory, async_session_factory
+from db.database import sync_engine
+from db.models.author_orm_model import AuthorsORM, QuotesORM
+from db.session import session_factory
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
+
 
 class SyncORM:
     @staticmethod
@@ -76,30 +78,52 @@ class SyncORM:
             print(result.all())
 
 
-class AsyncORM:
     @staticmethod
-    async def create_tables():
-        async with async_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
+    def select_workers_with_lazy_relationship():
+        with session_factory() as session:
+            query = select(AuthorsORM)
+            res = session.execute(query) # выполняет запрос и возвращает результат
+            authors = res.scalars().all()
+            
+            if len(authors) >= 2:
+                author1_quotes = authors[0].quotes
+                author2_quotes = authors[1].quotes
+                print(author1_quotes + author2_quotes)
+            else:
+                print("Недостаточно авторов в базе данных")
 
 
     @staticmethod
-    async def insert_workers():
-        async with async_session_factory() as session:
-            worker_jack = AuthorsORM(username="Jack")
-            worker_michael = AuthorsORM(username="Michael")
-            session.add_all([worker_jack, worker_michael])
-            await session.flush()
-            await session.commit()
+    def select_workers_with_joined_relationship():
+        with session_factory() as session:
+            query = (
+                select(AuthorsORM)
+                .options(joinedload(AuthorsORM.quotes))# загружает сразу все цитаты решение проблемы n + 1
+            ) 
+            res = session.execute(query)
+            authors = res.unique().scalars().all()
 
+            if len(authors) >= 2:
+                author1_quotes = authors[0].quotes
+                author2_quotes = authors[1].quotes
+                print(author1_quotes + author2_quotes)
+            else:
+                print("Недостаточно авторов в базе данных")
     
     @staticmethod
-    async def select_authors_and_quotes():
-        async with async_session_factory() as session:
-            query = select(AuthorsORM, QuotesORM.text).join(
-                QuotesORM,
-                AuthorsORM.id == QuotesORM.author_id
+    def select_workers_with_selectin_relationship():
+        with session_factory() as session:
+            query = (
+                select(AuthorsORM)
+                .options(selectinload(AuthorsORM.quotes)) # сначала загружает авторов, потом цитаты
             )
-            result = await session.execute(query)
-            print(result.all())
+            res = session.execute(query)
+            authors = res.unique().scalars().all()
+
+            if len(authors) >= 2:
+                author1_quotes = authors[0].quotes
+                author2_quotes = authors[1].quotes
+                print(author1_quotes + author2_quotes)
+            else:
+                print("Недостаточно авторов в базе данных")
+

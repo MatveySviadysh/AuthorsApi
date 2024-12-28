@@ -1,4 +1,4 @@
-from .models.author import metadata_obj
+from .models.author_core_model import metadata_obj
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine
 from core.config import settings
