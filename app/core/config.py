@@ -79,9 +79,16 @@ class TestSettings(BaseSettings):
 
 
 class RedisCacheSettings(BaseSettings):
-    REDIS_CACHE_HOST: str = config("REDIS_CACHE_HOST", default="localhost")
-    REDIS_CACHE_PORT: int = config("REDIS_CACHE_PORT", default=6379)
-    REDIS_CACHE_URL: str = f"redis://{REDIS_CACHE_HOST}:{REDIS_CACHE_PORT}"
+    REDIS_HOST: str = config("REDIS_HOST", default="localhost")
+    REDIS_PORT: int = config("REDIS_PORT", default=6379)
+    REDIS_DB: int = config("REDIS_DB", default=0)
+    REDIS_PASSWORD: str | None = config("REDIS_PASSWORD", default=None)
+    
+    @property
+    def REDIS_URL(self) -> str:
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
 
 class ClientSideCacheSettings(BaseSettings):
@@ -131,3 +138,5 @@ class Settings(
 
 
 settings = Settings()
+
+redis_url = settings.REDIS_URL

@@ -52,6 +52,32 @@ class AuthorsORM(Base):
 
     quotes: Mapped[list["QuotesORM"]] = relationship("QuotesORM", back_populates="author")
 
+    @property
+    def full_name(self) -> str:
+        parts = []
+        if self.last_name:
+            parts.append(self.last_name)
+        if self.first_name:
+            parts.append(self.first_name)
+        if self.patronymic:
+            parts.append(self.patronymic)
+        return " ".join(parts)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "patronymic": self.patronymic,
+            "photo": self.photo,
+            "bio": self.bio,
+            "birth_date": self.birth_date.isoformat() if self.birth_date else None,
+            "death_date": self.death_date.isoformat() if self.death_date else None,
+            "full_name": self.full_name,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+    
 class QuotesORM(Base):
     __tablename__ = "quotes"
 
