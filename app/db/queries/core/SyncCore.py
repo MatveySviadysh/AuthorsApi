@@ -126,7 +126,7 @@ class SyncCore:
 
 
     @staticmethod
-    def select_workers_with_lazy_relationship():
+    def select_authors_with_lazy_relationship():
         with sync_engine.connect() as conn:
             query = select(authors_table).options(lazyload(authors_table.quotes))
             result = conn.execute(query)
@@ -134,7 +134,7 @@ class SyncCore:
 
     
     @staticmethod
-    def select_workers_with_joined_relationship():
+    def select_authors_with_joined_relationship():
         with sync_engine.connect() as conn:
             query = select(authors_table).options(joinedload(authors_table.quotes))
             result = conn.execute(query)
@@ -142,7 +142,7 @@ class SyncCore:
 
 
     @staticmethod
-    def select_workers_with_selectin_relationship():
+    def select_authors_with_selectin_relationship():
         with sync_engine.connect() as conn:
             query = select(authors_table).options(selectinload(authors_table.quotes))
             result = conn.execute(query)

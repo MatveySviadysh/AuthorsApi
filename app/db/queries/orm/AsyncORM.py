@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, contains_eager
 from db.base import Base
 from db.database import async_engine
 from db.models.author_orm_model import AuthorsORM, QuotesORM
@@ -12,7 +12,6 @@ class AsyncORM:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
 
-
     @staticmethod
     async def insert_workers():
         async with async_session_factory() as session:
@@ -22,38 +21,32 @@ class AsyncORM:
             await session.flush()
             await session.commit()
 
-    
     @staticmethod
-    async def select_authors_and_quotes():
+    async def get_authors_with_quotes():
         async with async_session_factory() as session:
-            query = select(AuthorsORM, QuotesORM.text).join(
-                QuotesORM,
-                AuthorsORM.id == QuotesORM.author_id
+            query = (
+                select(AuthorsORM, QuotesORM.text)
+                .join(QuotesORM, AuthorsORM.id == QuotesORM.author_id)
             )
             result = await session.execute(query)
-            print(result.all())
+            return result.all()
 
-    
     @staticmethod
     async def select_workers_with_lazy_relationship():
         async with async_session_factory() as session:
             query = select(AuthorsORM)
-            res = await session.execute(query)
-            authors = res.scalars().all()
-            print(authors)
-
+            result = await session.execute(query)
+            return result.scalars().all()
 
     @staticmethod
-    async def select_workers_with_joined_relationship():
+    async def get_authors_with_quotes_joined():
         async with async_session_factory() as session:
             query = (
                 select(AuthorsORM)
                 .options(joinedload(AuthorsORM.quotes))
             )
-            res = await session.execute(query)
-            authors = res.unique().scalars().all()
-            print(authors)
-    
+            result = await session.execute(query)
+            return result.unique().scalars().all()
 
     @staticmethod
     async def select_workers_with_selectin_relationship():
@@ -62,6 +55,36 @@ class AsyncORM:
                 select(AuthorsORM)
                 .options(selectinload(AuthorsORM.quotes))
             )
-            res = await session.execute(query)
-            authors = res.unique().scalars().all()
-            print(authors)
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+
+    @staticmethod
+    async def select_workers_with_condition_relationship():
+        async with async_session_factory() as session:
+            query = (
+                select(AuthorsORM)
+                .join(AuthorsORM.quotes)
+                .options(contains_eager(AuthorsORM.quotes))
+                .filter(QuotesORM.workload == 'parttime')
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()
+
+    @staticmethod
+    async def select_workers_with_relationship_contains_eager_with_limit():
+        async with async_session_factory() as session:
+            subquery = (
+                select(QuotesORM.id)
+                .filter(QuotesORM.author_id == AuthorsORM.id)
+                .order_by(QuotesORM.id.desc())
+                .limit(1)
+                .scalar_subquery()
+                .correlate(AuthorsORM)
+            )
+            query = (
+                select(AuthorsORM)
+                .join(QuotesORM, QuotesORM.id.in_(subquery))
+                .options(contains_eager(AuthorsORM.quotes))
+            )
+            result = await session.execute(query)
+            return result.unique().scalars().all()

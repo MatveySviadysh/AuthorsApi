@@ -15,6 +15,5 @@ async def startup_event():
     app_logger.info("Приложение запущено")
 
 if __name__ == "__main__":
-   pass
-
+    pass
     

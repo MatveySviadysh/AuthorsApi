@@ -3,7 +3,7 @@ from db.database import sync_engine
 from db.models.author_orm_model import AuthorsORM, QuotesORM
 from db.session import session_factory
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, contains_eager
 
 
 class SyncORM:
@@ -127,3 +127,50 @@ class SyncORM:
             else:
                 print("Недостаточно авторов в базе данных")
 
+
+    @staticmethod
+    def select_workers_with_condition_relationship():
+        with session_factory() as session:
+            query = (
+                select(AuthorsORM)
+                .options(selectinload(AuthorsORM.quotes_parttime))
+            )
+            res = session.execute(query)
+            result = res.scalars().all()
+            print(result)
+
+    @staticmethod
+    def select_workers_with_condition_relationship_contains_eager():
+        with session_factory() as session:
+            query = (
+                select(AuthorsORM)
+                .join(AuthorsORM.resumes)
+                .options(contains_eager(AuthorsORM.resumes))
+                .filter(QuotesORM.workload == 'parttime')
+            )
+
+            res = session.execute(query)
+            result = res.unique().scalars().all()
+            print(result)
+
+    @staticmethod
+    def select_workers_with_relationship_contains_eager_with_limit():
+        with session_factory() as session:
+            subq = (
+                select(QuotesORM.id.label("parttime_resume_id"))
+                .filter(QuotesORM.worker_id == AuthorsORM.id)
+                .order_by(AuthorsORM.id.desc())
+                .limit(1)
+                .scalar_subquery()
+                .correlate(AuthorsORM)
+            )
+
+            query = (
+                select(AuthorsORM)
+                .join(QuotesORM, QuotesORM.id.in_(subq))
+                .options(contains_eager(AuthorsORM.resumes))
+            )
+
+            res = session.execute(query)
+            result = res.unique().scalars().all()
+            print(result)

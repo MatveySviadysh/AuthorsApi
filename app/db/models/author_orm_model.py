@@ -50,7 +50,12 @@ class AuthorsORM(Base):
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 
-    quotes: Mapped[list["QuotesORM"]] = relationship("QuotesORM", back_populates="author")
+    quotes: Mapped[list["QuotesORM"]] = relationship(
+        "QuotesORM",
+        back_populates="author",
+        primaryjoin="and_(AuthorsORM.id == QuotesORM.author_id, QuotesORM.text == 'parttime')",
+        order_by="QuotesORM.id.desc()"
+    )
 
     @property
     def full_name(self) -> str:
