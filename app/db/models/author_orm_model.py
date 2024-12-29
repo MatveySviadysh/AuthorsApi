@@ -47,6 +47,8 @@ class AuthorsORM(Base):
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     birth_date: Mapped[datetime] = mapped_column(Date, nullable=False)
     death_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)
+    created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
 
     quotes: Mapped[list["QuotesORM"]] = relationship("QuotesORM", back_populates="author")
 

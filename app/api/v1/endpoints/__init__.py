@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .authors import router as author_router  # убедитесь, что импорт правильный
+from .authors import router as author_router
 
 router = APIRouter(prefix="/v1")
-router.include_router(author_router)  # подключаем роутер авторов
+router.include_router(author_router)
