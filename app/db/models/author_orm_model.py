@@ -94,3 +94,14 @@ class QuotesORM(Base):
     
     author_id: Mapped[int] = mapped_column(ForeignKey("authors.id", ondelete="CASCADE"), nullable=False)
     author: Mapped["AuthorsORM"] = relationship("AuthorsORM", back_populates="quotes")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "text": self.text,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "year": self.year,
+            "author_id": self.author_id
+        }
+    

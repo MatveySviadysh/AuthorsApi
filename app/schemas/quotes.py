@@ -15,11 +15,6 @@ class QuoteBase(BaseModel):
         le=datetime.now().year,
         description="Год создания цитаты"
     )
-    source: Optional[str] = Field(
-        None, 
-        max_length=255,
-        description="Источник цитаты"
-    )
     author_id: int = Field(
         ..., 
         gt=0,
@@ -44,11 +39,6 @@ class QuoteUpdate(BaseModel):
         ge=0, 
         le=datetime.now().year,
         description="Год создания цитаты"
-    )
-    source: Optional[str] = Field(
-        None, 
-        max_length=255,
-        description="Источник цитаты"
     )
     author_id: Optional[int] = Field(
         None, 
